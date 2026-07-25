@@ -1,4 +1,4 @@
-(function () {
+javascript:(function () {
   if (typeof sendFollowupQuestion !== 'function') {
     alert('MathPapa Chat: could not find the chat function on this page. Make sure you are on the Algebra Calculator page and it has finished loading.');
     return;
