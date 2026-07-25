@@ -6,7 +6,7 @@ javascript:(function () {
 
   var respContainer = document.getElementById('followup-responses');
   if (!respContainer) {
-    alert(PM Chat: could not find the response container on this page.');
+    alert('PM Chat: could not find the response container on this page.');
     return;
   }
 
