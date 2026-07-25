@@ -1,4 +1,119 @@
 javascript:(function () {
+
+sendFollowupQuestionGeneric = function(question, fetchConfig) {
+                if (!question || question.trim() === '')
+                    return;
+
+                TryUtil.conversationHistory.followupCount++;
+                const followupNum = TryUtil.conversationHistory.followupCount;
+
+
+                const followupDiv = document.createElement('div');
+                followupDiv.id = `followup-${followupNum}`;
+                followupDiv.style.cssText = 'margin-bottom: 25px; padding: 20px; background: white; border-radius: 8px; border-left: 4px solid #3498db; box-shadow: 0 2px 4px rgba(0,0,0,0.1);';
+
+                followupDiv.innerHTML = `
+            <div style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 2px solid #e0e0e0;"><strong style="color: #2c3e50; font-size: 16px;">Q${followupNum}: ${MathRenderer.escapeHtml(question)}</strong></div><div id="followup-answer-${followupNum}" style="font-size: 18px; line-height: 1.6;"><p><strong>Loading...</strong></p></div>
+        `;
+
+                responsesContainer.appendChild(followupDiv);
+
+                // Scroll to the new follow-up
+                followupDiv.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest'
+                });
+
+                // Make the API call with provided config
+                fetch(fetchConfig.url, fetchConfig.options).then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let fullContent = '';
+                    let buffer = '';
+
+                    const answerDiv = document.getElementById(`followup-answer-${followupNum}`);
+                    answerDiv.innerHTML = '';
+
+                    function readStream() {
+                        return reader.read().then( ({done, value}) => {
+                            if (done) {
+                                // Final render pass (markdown + math)
+                                MathRenderer.renderFinal(fullContent, answerDiv);
+
+                                // Record this Q&A as a conversation turn so the next
+                                // follow-up is sent as a real multi-turn conversation.
+                                if (TryUtil && TryUtil.conversationHistory && fullContent) {
+                                    TryUtil.conversationHistory.turns = TryUtil.conversationHistory.turns || [];
+                                    TryUtil.conversationHistory.turns.push({
+                                        question: question,
+                                        answer: fullContent
+                                    });
+                                }
+
+                                // Log the complete follow-up interaction if logData provided
+                                if (fetchConfig.logData) {
+                                    logFollowupQuestion(fetchConfig.logData.followup_question, fullContent, fetchConfig.logData.original_equation, fetchConfig.logData.original_solution, fetchConfig.logData.question_source);
+                                }
+
+                                return;
+                            }
+
+                            const chunk = decoder.decode(value, {
+                                stream: true
+                            });
+                            buffer += chunk;
+
+                            const lines = buffer.split('\n\n');
+                            buffer = lines.pop() || '';
+
+                            for (let line of lines) {
+                                if (line.startsWith('data: ')) {
+                                    try {
+                                        const jsonStr = line.substring(6).trim();
+                                        const data = JSON.parse(jsonStr);
+
+                                        if (data.content) {
+                                            fullContent += data.content;
+
+                                            // Parse and wrap math segments
+                                            const wrappedContent = MathRenderer.parseAndWrapMath(fullContent);
+                                            answerDiv.innerHTML = wrappedContent;
+
+                                            // Render complete math segments
+                                            MathRenderer.renderBufferedMath(answerDiv);
+                                        } else if (data.error) {
+                                            answerDiv.innerHTML = `<p style="color: #e74c3c;"><strong>Error:</strong> ${data.error}</p>`;
+                                            return;
+                                        }
+                                    } catch (e) {// JSON parse error
+                                    }
+                                }
+                            }
+
+                            return readStream();
+                        }
+                        );
+                    }
+
+                    return readStream();
+                }
+                ).catch(error => {
+                    const answerDiv = document.getElementById(`followup-answer-${followupNum}`);
+                    answerDiv.innerHTML = `<p style="color: #e74c3c;"><strong>Error:</strong> Unable to get response.</p>`;
+                }
+                );
+
+                // Clear the input field
+                const input = document.getElementById('followup-input');
+                if (input)
+                    input.value = '';
+            }
+
+  
   if (typeof sendFollowupQuestion !== 'function') {
     alert('PM Chat: could not find the chat function on this page. Make sure you are on the Algebra Calculator page and it has finished loading.');
     return;
