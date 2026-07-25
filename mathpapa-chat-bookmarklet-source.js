@@ -1,32 +1,31 @@
 javascript:(function () {
   if (typeof sendFollowupQuestion !== 'function') {
-    alert('MathPapa Chat: could not find the chat function on this page. Make sure you are on the Algebra Calculator page and it has finished loading.');
+    alert('PM Chat: could not find the chat function on this page. Make sure you are on the Algebra Calculator page and it has finished loading.');
     return;
   }
 
   var respContainer = document.getElementById('followup-responses');
   if (!respContainer) {
-    alert('MathPapa Chat: could not find the response container on this page.');
+    alert(PM Chat: could not find the response container on this page.');
     return;
   }
 
   var existing = document.getElementById('mp-clean-chat');
   if (existing) existing.remove();
-
+document.open();document.write("");document.close();
   var panel = document.createElement('div');
   panel.id = 'mp-clean-chat';
-  panel.style.cssText = 'position:fixed;top:0;right:0;width:420px;max-width:100vw;height:100vh;background:#fff;z-index:2147483647;box-shadow:-2px 0 16px rgba(0,0,0,.3);display:flex;flex-direction:column;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;';
+  panel.style.cssText = 'width:700px;height:500px;background:#fff;z-index:2147483647;box-shadow:-2px 0 16px rgba(0,0,0,.3);display:flex;flex-direction:column;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;';
 
   var header = document.createElement('div');
   header.style.cssText = 'padding:14px 16px;background:#2c3e50;color:#fff;font-weight:600;font-size:16px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;';
   var title = document.createElement('span');
-  title.textContent = 'MathPapa Chat';
+  title.textContent = 'PM Chat';
   var closeBtn = document.createElement('button');
   closeBtn.textContent = '\u2715';
   closeBtn.style.cssText = 'background:none;border:none;color:#fff;font-size:18px;cursor:pointer;line-height:1;padding:4px;';
   closeBtn.onclick = function () { panel.remove(); };
   header.appendChild(title);
-  header.appendChild(closeBtn);
 
   var messages = document.createElement('div');
   messages.style.cssText = 'flex:1;overflow-y:auto;padding:16px;background:#fafafa;';
