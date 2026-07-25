@@ -1,12 +1,12 @@
 (function () {
   if (typeof sendFollowupQuestion !== 'function') {
-    alert('MathPapa Chat: could not find the chat function on this page. Make sure you are on the Algebra Calculator page and it has finished loading.');
+    alert('PM Chat: could not find the chat function on this page. Make sure you are on the Algebra Calculator page and it has finished loading.');
     return;
   }
 
   var respContainer = document.getElementById('followup-responses');
   if (!respContainer) {
-    alert('MathPapa Chat: could not find the response container on this page.');
+    alert('PM Chat: could not find the response container on this page.');
     return;
   }
 
@@ -30,7 +30,7 @@
   var header = document.createElement('div');
   header.style.cssText = 'padding:14px 16px;background:#2c3e50;color:#fff;font-weight:600;font-size:16px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;';
   var title = document.createElement('span');
-  title.textContent = 'MathPapa Chat';
+  title.textContent = 'PM Chat';
   var closeBtn = document.createElement('button');
   closeBtn.textContent = '\u2715';
   closeBtn.style.cssText = 'background:none;border:none;color:#fff;font-size:18px;cursor:pointer;line-height:1;padding:4px;';
