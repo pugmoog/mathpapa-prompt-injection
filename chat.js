@@ -106,8 +106,10 @@
   var inputRow = document.createElement('div');
   inputRow.style.cssText = 'display:flex;padding:12px;border-top:1px solid #e0e0e0;gap:8px;flex-shrink:0;background:#fff;';
 
+  var USER_REASONING_REMINDER = 'Remember: think first, then put [[RESPONSE]] before the final answer; use "[UTILITY]js code to be evaled" instead when a calculation helps.';
   var input = document.createElement('input');
   input.type = 'text';
+  input.maxLength = 500 - USER_REASONING_REMINDER.length - 2;
   input.placeholder = 'Setting up\u2026';
   input.disabled = true;
   input.style.cssText = 'flex:1;padding:10px 12px;border:1px solid #ccc;border-radius:6px;font-size:14px;outline:none;';
@@ -545,7 +547,7 @@
     input.value = '';
     var entry = makeEntry();
     console.log(LOG_PREFIX, 'user send ->', q);
-    requestChat(q, {
+    requestChat(q + '\n\n' + USER_REASONING_REMINDER, {
       update: function (raw) { updateEntry(entry, raw); },
       complete: function (raw) { finishReasoningStage(entry, raw); },
       error: function (error) { resolveEntryAsPlain(entry, 'Unable to get response: ' + error.message); }
