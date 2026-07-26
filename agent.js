@@ -20,7 +20,7 @@
     window.__mpChatFetchPatched = true;
     var origFetch = window.fetch;
     window.fetch = function (url, opts) {
-      var isFollowup = typeof url === 'string' && url.indexOf('https://mathpapa.com/ask_algebrouter_followup') !== -1;
+      var isFollowup = typeof url === 'string' && url.indexOf('/ask_algebrouter_followup/') !== -1;
       if (isFollowup) {
         console.log(LOG_PREFIX, 'request ->', url);
         console.log(LOG_PREFIX, 'request body ->', opts && opts.body);
@@ -566,7 +566,7 @@
     activeRequestController = controller;
     setRequestPending(1);
     console.log(LOG_PREFIX, 'direct chat request ->', question);
-    return fetch('https://mathpapa.com/ask_algebrouter_followup/', {
+    return fetch('/ask_algebrouter_followup/', {
       method: 'POST',
       signal: controller.signal,
       headers: {
