@@ -1,4 +1,12 @@
 (function () {
+  var RAW_SCRIPT_BASE = 'https://raw.githubusercontent.com/pugmoog/mathpapa-prompt-injection/refs/heads/main/';
+  var JQUERY_SCRIPT_URL = RAW_SCRIPT_BASE + 'jquery.min.js';
+  var MARKED_SCRIPT_URL = RAW_SCRIPT_BASE + 'marked.min.js';
+  var MATHQUILL_SCRIPT_URL = RAW_SCRIPT_BASE + 'mathquill.min.js';
+  var MATHQUILL_CSS_URL = RAW_SCRIPT_BASE + 'mathquill.css';
+  var MARKDOWN_SCRIPT_URL = RAW_SCRIPT_BASE + 'markdown.js';
+
+  function launchAgent() {
   var LOG_PREFIX = '[XugMoog Agent]';
 
   if (window.__mpChatBookmarkletRan || document.getElementById('mp-clean-chat')) {
@@ -76,11 +84,9 @@
     '.mp-dot { display:inline-block; width:5px; height:5px; margin-right:3px; border-radius:50%; background:#9aa5b1; animation:mpDotPulse 1.2s infinite ease-in-out; }' +
     '.mp-dot:nth-child(2) { animation-delay:.15s; }' +
     '.mp-dot:nth-child(3) { animation-delay:.3s; }' +
-    '.mp-markdown{font-size:14px;line-height:1.6;overflow-wrap:anywhere}.mp-markdown>*:first-child{margin-top:0}.mp-markdown>*:last-child{margin-bottom:0}' +
-    '.mp-markdown p{margin:0 0 10px}.mp-markdown h1,.mp-markdown h2,.mp-markdown h3{margin:16px 0 8px;line-height:1.25}.mp-markdown h1{font-size:20px}.mp-markdown h2{font-size:17px}.mp-markdown h3{font-size:15px}' +
-    '.mp-markdown ul,.mp-markdown ol{margin:6px 0 12px;padding-left:22px}.mp-markdown li{margin:3px 0}.mp-markdown blockquote{margin:8px 0;padding-left:11px;border-left:3px solid #cbd5e1;color:#64748b}' +
-    '.mp-markdown code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#e8edf2;border-radius:4px;padding:1px 4px;font-size:.92em}.mp-markdown pre{overflow:auto;background:#1f2937;color:#f8fafc;border-radius:8px;padding:12px;margin:10px 0}.mp-markdown pre code{background:none;padding:0;color:inherit}' +
-    '.mp-activity{display:flex;align-items:flex-start;gap:9px;padding:8px 10px;margin:8px 0;border:1px solid #d9e1e8;border-radius:8px;background:#fff;font-size:13px}.mp-activity-icon{color:#16803c;font-weight:700}.mp-activity.error .mp-activity-icon{color:#c2413b}.mp-activity-title{font-weight:600;color:#263746}.mp-activity-detail{color:#73808c;font-size:12px;margin-top:2px}';
+    '.mp-activity{display:flex;align-items:flex-start;gap:9px;padding:8px 10px;margin:8px 0;border:1px solid #d9e1e8;border-radius:8px;background:#fff;font-size:13px}.mp-activity-icon{color:#16803c;font-weight:700}.mp-activity.error .mp-activity-icon{color:#c2413b}.mp-activity-title{font-weight:600;color:#263746}.mp-activity-detail{color:#73808c;font-size:12px;margin-top:2px}' +
+    window.__xugMoogMathQuillCssText +
+    window.XugMoogMarkdown.cssText;
   document.head.appendChild(styleTag);
 
   var buildSurface = document.createElement('div');
@@ -282,79 +288,9 @@
   panel.appendChild(uploadInput);
   document.body.appendChild(panel);
 
-  function escapeHtml(text) {
-    return String(text == null ? '' : text).replace(/[&<>"']/g, function (char) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char];
-    });
-  }
-
-  function renderInlineMarkdown(text) {
-    var codeSpans = [];
-    text = String(text).replace(/`([^`\n]+)`/g, function (_, code) {
-      var key = '\u0000CODE' + codeSpans.length + '\u0000';
-      codeSpans.push('<code>' + escapeHtml(code) + '</code>');
-      return key;
-    });
-    text = escapeHtml(text)
-      .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
-      .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
-      .replace(/__([^_\n]+)__/g, '<strong>$1</strong>')
-      .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>')
-      .replace(/(^|[^_])_([^_\n]+)_/g, '$1<em>$2</em>');
-    return text.replace(/\u0000CODE(\d+)\u0000/g, function (_, index) { return codeSpans[Number(index)]; });
-  }
-
-  function renderMarkdown(text) {
-    var lines = String(text == null ? '' : text).replace(/\r\n?/g, '\n').split('\n');
-    var html = '';
-    var paragraph = [];
-    var listType = '';
-    var inFence = false;
-    var fenceLines = [];
-    function closeParagraph() {
-      if (!paragraph.length) return;
-      html += '<p>' + paragraph.map(renderInlineMarkdown).join('<br>') + '</p>';
-      paragraph = [];
-    }
-    function closeList() {
-      if (!listType) return;
-      html += '</' + listType + '>';
-      listType = '';
-    }
-    for (var i = 0; i < lines.length; i++) {
-      var line = lines[i];
-      if (/^```/.test(line)) {
-        closeParagraph(); closeList();
-        if (inFence) {
-          html += '<pre><code>' + escapeHtml(fenceLines.join('\n')) + '</code></pre>';
-          fenceLines = [];
-        }
-        inFence = !inFence;
-        continue;
-      }
-      if (inFence) { fenceLines.push(line); continue; }
-      var heading = line.match(/^(#{1,3})\s+(.+)$/);
-      var unordered = line.match(/^\s*[-*+]\s+(.+)$/);
-      var ordered = line.match(/^\s*\d+[.)]\s+(.+)$/);
-      var quote = line.match(/^>\s?(.*)$/);
-      if (!line.trim()) { closeParagraph(); closeList(); }
-      else if (heading) { closeParagraph(); closeList(); var level = heading[1].length; html += '<h' + level + '>' + renderInlineMarkdown(heading[2]) + '</h' + level + '>'; }
-      else if (unordered || ordered) {
-        closeParagraph();
-        var wanted = unordered ? 'ul' : 'ol';
-        if (listType !== wanted) { closeList(); listType = wanted; html += '<' + wanted + '>'; }
-        html += '<li>' + renderInlineMarkdown((unordered || ordered)[1]) + '</li>';
-      } else if (quote) { closeParagraph(); closeList(); html += '<blockquote>' + renderInlineMarkdown(quote[1]) + '</blockquote>'; }
-      else { closeList(); paragraph.push(line); }
-    }
-    if (inFence) html += '<pre><code>' + escapeHtml(fenceLines.join('\n')) + '</code></pre>';
-    closeParagraph(); closeList();
-    return html;
-  }
-
   function renderMarkdownInto(element, text) {
     element.classList.add('mp-markdown');
-    element.innerHTML = renderMarkdown(text);
+    window.XugMoogMarkdown.renderInto(element, text);
   }
 
   function addUserBubble(text) {
@@ -630,7 +566,7 @@
     activeRequestController = controller;
     setRequestPending(1);
     console.log(LOG_PREFIX, 'direct chat request ->', question);
-    return fetch('/ask_algebrouter_followup/', {
+    return fetch('https://mathpapa.com/ask_algebrouter_followup/', {
       method: 'POST',
       signal: controller.signal,
       headers: {
@@ -1120,4 +1056,41 @@
     });
   }
   runSetup();
+  }
+
+  function loadMarkdownRenderer() {
+    if (window.XugMoogMarkdown && window.__xugMoogMathQuillCssText) {
+      launchAgent();
+      return;
+    }
+    if (!window.__xugMoogMarkdownPromise) {
+      function fetchSource(url) {
+        return fetch(url, { cache: 'no-cache' }).then(function (response) {
+          if (!response.ok) throw new Error(url + ' returned HTTP ' + response.status);
+          return response.text();
+        });
+      }
+      function evaluateSource(url) {
+        return fetchSource(url).then(function (source) { (0, eval)(source + '\n//# sourceURL=' + url); });
+      }
+      var cssPromise = fetchSource(MATHQUILL_CSS_URL).then(function (css) {
+        window.__xugMoogMathQuillCssText = css;
+      });
+      var scriptsPromise = evaluateSource(JQUERY_SCRIPT_URL)
+        .then(function () { return evaluateSource(MATHQUILL_SCRIPT_URL); })
+        .then(function () {
+          if (window.jQuery && window.jQuery.noConflict) window.jQuery.noConflict(true);
+          return evaluateSource(MARKED_SCRIPT_URL);
+        })
+        .then(function () { return evaluateSource(MARKDOWN_SCRIPT_URL); });
+      window.__xugMoogMarkdownPromise = Promise.all([cssPromise, scriptsPromise]).then(function () {
+        if (!window.XugMoogMarkdown || !window.MathQuill || !window.marked) throw new Error('dependencies did not initialize');
+      });
+    }
+    window.__xugMoogMarkdownPromise.then(launchAgent).catch(function (error) {
+      alert('XugMoog Agent could not load markdown.js from raw.githubusercontent.com: ' + error.message);
+    });
+  }
+
+  loadMarkdownRenderer();
 })();
