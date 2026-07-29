@@ -239,8 +239,7 @@
 
   downloadBtn.onclick = function () {
     try {
-      var blob = new Blob([workspaceHtml], { type: 'text/html;charset=utf-8' });
-      var url = URL.createObjectURL(blob);
+      var url = 'data:text/html;charset=utf-8,' + encodeURIComponent(workspaceHtml);
       var link = document.createElement('a');
       link.href = url;
       link.download = workspaceFileName;
@@ -248,7 +247,6 @@
       document.body.appendChild(link);
       link.click();
       link.remove();
-      setTimeout(function () { URL.revokeObjectURL(url); }, 0);
       showWorkspaceFileStatus('Downloaded ' + workspaceFileName + ' \u00b7 revision ' + workspaceRevision, false);
       console.log(LOG_PREFIX, 'workspace HTML downloaded ->', workspaceFileName, workspaceHtml.length, 'characters');
     } catch (error) {
